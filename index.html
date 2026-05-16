@@ -1,0 +1,2566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supervised Classification on German Credit Risk — Project 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<style>
+:root {
+  --lilac: #B65FCF;
+  --lilac-dark: #7A3D8C;
+  --lilac-deepest: #3D1F4D;
+  --lilac-night: #251330;
+  --lilac-light: #D89BE3;
+  --lilac-pale: #EFD9F4;
+  --lilac-mist: #F7EAFA;
+  --cream: #FAF7FC;
+  --paper: #FDFBFE;
+  --ivory: #F6F1ED;
+  --ink: #1E1623;
+  --gold: #C9A04F;
+  --gold-deep: #A87F2D;
+  --code-bg: #2A1F33;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--lilac-night);
+  font-family: 'Outfit', sans-serif;
+  color: var(--ink);
+}
+
+.deck {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  background: var(--cream);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+  overflow: auto;
+  padding: 50px 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.slide.active { opacity: 1; visibility: visible; }
+
+.slide::-webkit-scrollbar { width: 8px; }
+.slide::-webkit-scrollbar-track { background: transparent; }
+.slide::-webkit-scrollbar-thumb { background: var(--lilac-pale); border-radius: 4px; }
+
+/* ============== TOP / BOTTOM CHROME ============== */
+.slide-number {
+  position: fixed;
+  bottom: 24px;
+  right: 32px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--lilac-dark);
+  letter-spacing: 0.18em;
+  z-index: 100;
+  background: rgba(253, 251, 254, 0.95);
+  padding: 6px 14px;
+  border-radius: 2px;
+  border: 1px solid var(--lilac-pale);
+}
+
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--lilac-mist);
+  z-index: 99;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--lilac);
+  width: 0;
+  transition: width 0.3s;
+}
+
+.kbd-hint {
+  position: fixed;
+  bottom: 24px;
+  left: 32px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--lilac-dark);
+  z-index: 100;
+  background: rgba(253, 251, 254, 0.95);
+  padding: 6px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--lilac-pale);
+}
+
+.kbd {
+  display: inline-block;
+  background: var(--lilac-deepest);
+  color: var(--paper);
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 10px;
+  margin: 0 2px;
+}
+
+/* ============== TAGS / TITLES ============== */
+.section-tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--lilac);
+  margin-bottom: 18px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--lilac-pale);
+}
+
+h1.slide-title {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: 58px;
+  line-height: 1.05;
+  color: var(--lilac-deepest);
+  letter-spacing: -0.015em;
+  margin-bottom: 28px;
+}
+
+h2.slide-title {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1.1;
+  color: var(--lilac-deepest);
+  letter-spacing: -0.01em;
+  margin-bottom: 22px;
+}
+
+h3 {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--lilac-dark);
+  margin: 18px 0 10px;
+}
+
+p, li {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 920px;
+  font-weight: 400;
+}
+
+ul {
+  list-style: none;
+  margin: 12px 0;
+}
+
+ul li {
+  position: relative;
+  padding-left: 22px;
+  margin-bottom: 8px;
+}
+
+ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 10px;
+  height: 1px;
+  background: var(--lilac);
+}
+
+code.inline {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--lilac-mist);
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 0.88em;
+  color: var(--lilac-deepest);
+}
+
+/* ============== TITLE SLIDE ============== */
+.title-slide {
+  background:
+    radial-gradient(circle at 78% 22%, rgba(216, 155, 227, 0.35) 0%, transparent 50%),
+    radial-gradient(circle at 22% 78%, rgba(201, 160, 79, 0.18) 0%, transparent 45%),
+    linear-gradient(135deg, var(--lilac-night) 0%, var(--lilac-deepest) 55%, var(--lilac-dark) 100%);
+  color: var(--paper);
+  justify-content: space-between;
+  position: relative;
+}
+
+.title-slide::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+}
+
+.title-slide .topbar,
+.title-slide .center,
+.title-slide .bottombar {
+  position: relative;
+  z-index: 2;
+}
+
+.title-slide .topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(253, 251, 254, 0.75);
+}
+
+.title-slide .topbar .brand {
+  border-left: 2px solid var(--gold);
+  padding-left: 14px;
+}
+
+.title-slide .center {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.title-slide .eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 24px;
+}
+
+.title-slide h1 {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: 104px;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  margin-bottom: 28px;
+}
+
+.title-slide h1 .italic {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--lilac-light);
+}
+
+.title-slide .subtitle {
+  font-size: 22px;
+  font-weight: 300;
+  color: rgba(253, 251, 254, 0.88);
+  max-width: 740px;
+  line-height: 1.4;
+}
+
+.title-slide .bottombar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: rgba(253, 251, 254, 0.6);
+}
+
+.title-slide .meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-slide .meta-block .label {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: rgba(253, 251, 254, 0.55);
+  text-transform: uppercase;
+}
+
+.title-slide .meta-block .value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  letter-spacing: 0;
+  color: var(--paper);
+  text-transform: none;
+  font-weight: 500;
+}
+
+/* ============== SECTION DIVIDER ============== */
+.section-slide {
+  background:
+    radial-gradient(circle at 30% 50%, rgba(182, 95, 207, 0.25) 0%, transparent 55%),
+    linear-gradient(165deg, var(--lilac-night) 0%, var(--lilac-deepest) 100%);
+  color: var(--paper);
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+}
+
+.section-slide::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 60px;
+  width: 200px;
+  height: 200px;
+  border: 1px solid rgba(216, 155, 227, 0.25);
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.section-slide::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 110px;
+  width: 100px;
+  height: 100px;
+  background: var(--gold);
+  opacity: 0.12;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+
+.section-slide .section-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.4em;
+  color: var(--gold);
+  margin-bottom: 30px;
+  border-left: 2px solid var(--gold);
+  padding-left: 14px;
+  position: relative;
+  z-index: 2;
+}
+
+.section-slide h1 {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: 86px;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  max-width: 900px;
+  margin-bottom: 22px;
+  position: relative;
+  z-index: 2;
+}
+
+.section-slide .section-desc {
+  font-size: 19px;
+  font-weight: 300;
+  color: rgba(253, 251, 254, 0.82);
+  max-width: 700px;
+  line-height: 1.5;
+  position: relative;
+  z-index: 2;
+}
+
+/* ============== LAYOUT ============== */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 38px;
+  flex: 1;
+}
+
+.two-col-uneven {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 38px;
+  flex: 1;
+}
+
+.col-text-only { max-width: 1000px; }
+
+/* ============== CODE BLOCKS ============== */
+.code-wrap {
+  background: var(--code-bg);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  margin: 14px 0;
+  box-shadow: 0 2px 12px rgba(61, 31, 77, 0.12);
+}
+
+.code-wrap .code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--lilac-pale);
+}
+
+.code-wrap .code-header .dot-group {
+  display: flex;
+  gap: 6px;
+}
+
+.code-wrap .code-header .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  opacity: 0.7;
+}
+.code-wrap .code-header .dot:nth-child(1) { background: #D89BE3; }
+.code-wrap .code-header .dot:nth-child(2) { background: #C9A04F; }
+.code-wrap .code-header .dot:nth-child(3) { background: #7A3D8C; }
+
+.code-wrap pre {
+  margin: 0;
+  padding: 16px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-x: auto;
+  max-height: 460px;
+  background: transparent;
+}
+
+.code-wrap pre code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  background: transparent;
+}
+
+.code-wrap pre::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.code-wrap pre::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+/* ============== OUTPUT ============== */
+.output {
+  background: var(--lilac-mist);
+  border-left: 3px solid var(--lilac);
+  padding: 14px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: var(--lilac-deepest);
+  line-height: 1.55;
+  margin: 12px 0;
+  border-radius: 0 4px 4px 0;
+  overflow-x: auto;
+  max-height: 280px;
+  white-space: pre;
+}
+
+/* ============== CALLOUT ============== */
+.callout {
+  background: linear-gradient(135deg, var(--lilac-mist) 0%, var(--cream) 100%);
+  border-left: 3px solid var(--gold);
+  padding: 18px 22px;
+  margin: 18px 0;
+  border-radius: 0 4px 4px 0;
+  max-width: 920px;
+}
+
+.callout .callout-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--gold-deep);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.callout p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--lilac-deepest);
+}
+
+/* ============== TABLE ============== */
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+  background: var(--paper);
+  border: 1px solid var(--lilac-pale);
+}
+
+.styled-table thead {
+  background: var(--lilac-deepest);
+  color: var(--paper);
+}
+
+.styled-table th {
+  padding: 12px 14px;
+  text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.styled-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--lilac-pale);
+  color: var(--ink);
+}
+
+.styled-table tbody tr:hover { background: var(--lilac-mist); }
+.styled-table tbody tr:nth-child(even) { background: rgba(247, 234, 250, 0.4); }
+
+.styled-table .feature-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--lilac-dark);
+  font-weight: 500;
+}
+
+/* ============== STAT CARDS ============== */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  background: var(--paper);
+  border: 1px solid var(--lilac-pale);
+  padding: 18px 20px;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--lilac);
+}
+
+.stat-card.gold::before { background: var(--gold); }
+
+.stat-card .stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--lilac);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.stat-card .stat-value {
+  font-family: 'DM Serif Display', serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--lilac-deepest);
+  line-height: 1;
+}
+
+.stat-card .stat-sub {
+  font-size: 12px;
+  color: var(--lilac-dark);
+  margin-top: 4px;
+}
+
+/* ============== BARS ============== */
+.bar-row {
+  display: grid;
+  grid-template-columns: 220px 1fr 110px;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.bar-row .bar-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  color: var(--lilac-deepest);
+  font-weight: 600;
+}
+
+.bar-row .bar-track {
+  height: 14px;
+  background: var(--lilac-mist);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.bar-row .bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--lilac-dark), var(--lilac));
+  border-radius: 7px;
+}
+
+.bar-row .bar-fill.best {
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+}
+
+.bar-row .bar-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--lilac-deepest);
+  text-align: right;
+  font-weight: 600;
+}
+
+/* ============== FEATURE IMPORTANCE CHART ============== */
+.feat-chart {
+  background: var(--paper);
+  border: 1px solid var(--lilac-pale);
+  padding: 24px 28px;
+  border-radius: 6px;
+  margin: 14px 0;
+}
+
+.feat-chart .feat-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--lilac-dark);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.feat-chart .feat-row {
+  display: grid;
+  grid-template-columns: 180px 1fr 60px;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.feat-chart .feat-row .feat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--lilac-deepest);
+  text-align: right;
+}
+
+.feat-chart .feat-row .feat-track {
+  height: 18px;
+  background: var(--lilac-mist);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.feat-chart .feat-row .feat-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--lilac), var(--lilac-light));
+  border-radius: 3px;
+}
+
+.feat-chart .feat-row.top .feat-fill {
+  background: linear-gradient(90deg, var(--lilac-dark), var(--lilac));
+}
+
+.feat-chart .feat-row .feat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--lilac-dark);
+  font-weight: 500;
+}
+
+/* ============== CONFUSION MATRIX ============== */
+.conf-grid {
+  display: grid;
+  grid-template-columns: auto repeat(2, 1fr);
+  gap: 6px;
+  max-width: 480px;
+  margin: 14px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.conf-cell {
+  padding: 14px 18px;
+  text-align: center;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.conf-cell.header {
+  background: transparent;
+  color: var(--lilac-dark);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.conf-cell.corner { background: transparent; }
+
+.conf-cell.tn, .conf-cell.tp {
+  background: linear-gradient(135deg, var(--lilac-pale), var(--lilac-mist));
+  color: var(--lilac-deepest);
+  border: 1px solid var(--lilac-light);
+}
+
+.conf-cell.fp, .conf-cell.fn {
+  background: var(--ivory);
+  color: var(--lilac-dark);
+  border: 1px solid var(--lilac-pale);
+}
+
+.conf-cell .cell-num {
+  font-size: 22px;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.conf-cell .cell-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ============== NAV ============== */
+.nav-controls {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 100;
+  background: rgba(253, 251, 254, 0.96);
+  padding: 8px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--lilac-pale);
+  box-shadow: 0 2px 10px rgba(61, 31, 77, 0.1);
+}
+
+.nav-btn {
+  background: var(--lilac-deepest);
+  color: var(--paper);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.nav-btn:hover { background: var(--lilac); }
+.nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ============== CLOSING ============== */
+.closing-slide {
+  background:
+    radial-gradient(circle at 50% 35%, rgba(216, 155, 227, 0.3) 0%, transparent 55%),
+    linear-gradient(160deg, var(--lilac-night) 0%, var(--lilac-deepest) 100%);
+  color: var(--paper);
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.closing-slide h1 {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 400;
+  font-size: 120px;
+  letter-spacing: -0.025em;
+  margin-bottom: 30px;
+}
+
+.closing-slide h1 .italic {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--lilac-light);
+}
+
+.closing-slide .closing-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.4em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.closing-slide .closing-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  color: rgba(253, 251, 254, 0.6);
+  margin-top: 40px;
+}
+
+/* ============== misc helpers ============== */
+.note {
+  font-size: 14px;
+  color: var(--lilac-dark);
+  font-style: italic;
+  margin-top: 10px;
+}
+
+.pipeline-diagram {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+  padding: 22px 24px;
+  background: var(--ivory);
+  border-radius: 4px;
+  border: 1px solid var(--lilac-pale);
+}
+
+.pipe-box {
+  background: var(--paper);
+  border: 1px solid var(--lilac);
+  padding: 9px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--lilac-deepest);
+  border-radius: 3px;
+}
+
+.pipe-box.highlight {
+  background: var(--lilac);
+  color: var(--paper);
+  border-color: var(--lilac);
+}
+
+.pipe-arrow {
+  color: var(--lilac);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+@media (max-height: 800px) {
+  .slide { padding: 36px 60px; }
+  h1.slide-title { font-size: 46px; margin-bottom: 22px; }
+  h2.slide-title { font-size: 36px; margin-bottom: 18px; }
+  .title-slide h1 { font-size: 78px; }
+  .section-slide h1 { font-size: 66px; }
+  .closing-slide h1 { font-size: 92px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+<div class="slide-number" id="slideNumber">01 / 56</div>
+<div class="kbd-hint">USE <span class="kbd">←</span> <span class="kbd">→</span> TO NAVIGATE</div>
+
+<div class="deck" id="deck">
+
+<!-- =========================================================
+SLIDE 1 — TITLE
+========================================================= -->
+<section class="slide title-slide active">
+  <div class="topbar">
+    <div class="brand">CSCI 541 · NEURAL NETWORKS · PROJECT 02</div>
+    <div>ST. CLOUD STATE UNIVERSITY</div>
+  </div>
+
+  <div class="center">
+    <div class="eyebrow">A Supervised Classification Study</div>
+    <h1>German <span class="italic">Credit</span><br>Risk Prediction</h1>
+    <p class="subtitle">Predicting whether a loan applicant is a <em>good</em> or <em>bad</em> credit risk using logistic regression, decision trees, and random forests on the OpenML German Credit dataset.</p>
+  </div>
+
+  <div class="bottombar">
+    <div class="meta-block">
+      <span class="label">Dataset</span>
+      <span class="value">OpenML #31 — credit-g</span>
+    </div>
+    <div class="meta-block">
+      <span class="label">Task</span>
+      <span class="value">Binary Classification</span>
+    </div>
+    <div class="meta-block">
+      <span class="label">Target</span>
+      <span class="value">class ∈ {good, bad}</span>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 2 — AGENDA
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Table of Contents</span>
+  <h1 class="slide-title">What we'll cover</h1>
+  <div class="two-col">
+    <div>
+      <h3 style="color:var(--gold-deep)">01 — Objective &amp; Dataset</h3>
+      <ul>
+        <li>Why we're predicting credit risk</li>
+        <li>The German Credit (credit-g) features</li>
+        <li>Target encoding</li>
+      </ul>
+      <h3 style="color:var(--gold-deep)">02 — Data Preparation</h3>
+      <ul>
+        <li>Loading the ARFF file</li>
+        <li>Decoding byte strings</li>
+        <li>One-hot encoding categoricals</li>
+        <li>Standard scaling</li>
+      </ul>
+      <h3 style="color:var(--gold-deep)">03 — Model Training</h3>
+      <ul>
+        <li>Logistic Regression baseline</li>
+        <li>Decision Tree</li>
+        <li>Random Forest</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="color:var(--gold-deep)">04 — Evaluation</h3>
+      <ul>
+        <li>Accuracy, Precision, Recall, F1</li>
+        <li>Per-class breakdowns</li>
+      </ul>
+      <h3 style="color:var(--gold-deep)">05 — Hyperparameter Tuning</h3>
+      <ul>
+        <li>GridSearchCV for RF and LR</li>
+        <li>Best-parameter retraining</li>
+      </ul>
+      <h3 style="color:var(--gold-deep)">06 — Interpretation</h3>
+      <ul>
+        <li>Random Forest feature importance</li>
+        <li>Credit amount · age · duration</li>
+      </ul>
+      <h3 style="color:var(--gold-deep)">07 — Conclusion</h3>
+      <ul>
+        <li>Limitations &amp; ethical reflection</li>
+        <li>Future improvements</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 3 — OBJECTIVE
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Objective</span>
+  <h1 class="slide-title">What this project is about</h1>
+  <div class="col-text-only">
+    <p style="font-size:20px; margin-bottom:18px;">The aim is to construct a model that can effectively determine the <strong>credit risk of credit applicants</strong> using the German Credit Risk dataset.</p>
+    <p style="font-size:17px;">The dataset consists of various features such as credit amount, duration, age, and other relevant attributes, along with the target variable indicating whether the applicant is a <em>good</em> or <em>bad</em> credit risk. We train machine learning classifiers to predict whether a new applicant is likely to be a good or bad credit risk.</p>
+  </div>
+  <div class="callout">
+    <div class="callout-label">Why this matters</div>
+    <p>Credit scoring touches real lives: a wrong "bad" prediction can deny someone a home, a car, or working capital; a wrong "good" prediction costs the lender money. Choosing the right model, the right metric, and the right interpretation is consequential.</p>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 4 — DATASET OVERVIEW
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Dataset</span>
+  <h1 class="slide-title">The German Credit dataset</h1>
+  <div class="two-col">
+    <div>
+      <p>Hosted on OpenML as <code class="inline">dataset_id = 31</code>, the file <code class="inline">dataset_31_credit-g.arff</code> contains <strong>1,000 loan applicants</strong> with <strong>20 attributes</strong> plus one target.</p>
+      <h3>Schema highlights</h3>
+      <ul>
+        <li><strong>Numerical:</strong> duration, credit_amount, installment_commitment, age, existing_credits, num_dependents</li>
+        <li><strong>Categorical:</strong> checking_status, credit_history, purpose, savings_status, employment, personal_status, property_magnitude, housing, job, and more</li>
+        <li><strong>Target:</strong> <code class="inline">class</code> — either "good" or "bad"</li>
+      </ul>
+    </div>
+    <div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Rows</div>
+          <div class="stat-value">1,000</div>
+          <div class="stat-sub">loan applicants</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Features</div>
+          <div class="stat-value">20</div>
+          <div class="stat-sub">+ 1 target</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-label">Class 0 (bad)</div>
+          <div class="stat-value">300</div>
+          <div class="stat-sub">30% of data</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-label">Class 1 (good)</div>
+          <div class="stat-value">700</div>
+          <div class="stat-sub">70% of data</div>
+        </div>
+      </div>
+      <p class="note">The 70/30 class imbalance is mild but worth keeping in mind for evaluation.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 5 — DATA DICTIONARY
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Data Dictionary</span>
+  <h2 class="slide-title">Key features at a glance</h2>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Feature</th><th>Description</th><th>Type</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="feature-name">checking_status</td><td>Status of existing checking account</td><td>categorical</td></tr>
+      <tr><td class="feature-name">duration</td><td>Loan duration in months</td><td>numerical</td></tr>
+      <tr><td class="feature-name">credit_history</td><td>Past credit history (paid, delayed, critical…)</td><td>categorical</td></tr>
+      <tr><td class="feature-name">purpose</td><td>Why the loan is being taken (radio/tv, education, new car…)</td><td>categorical</td></tr>
+      <tr><td class="feature-name">credit_amount</td><td>Loan amount in DM</td><td>numerical</td></tr>
+      <tr><td class="feature-name">savings_status</td><td>Savings account balance bracket</td><td>categorical</td></tr>
+      <tr><td class="feature-name">employment</td><td>Years in current employment</td><td>categorical</td></tr>
+      <tr><td class="feature-name">personal_status</td><td>Sex and marital status</td><td>categorical</td></tr>
+      <tr><td class="feature-name">age</td><td>Age in years</td><td>numerical</td></tr>
+      <tr><td class="feature-name">housing</td><td>Own / rent / for free</td><td>categorical</td></tr>
+      <tr><td class="feature-name">job</td><td>Skilled / unskilled / management</td><td>categorical</td></tr>
+      <tr style="background:rgba(201, 160, 79, 0.08);"><td class="feature-name">class</td><td><strong>Target</strong> — "good" or "bad" credit risk</td><td>categorical</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- =========================================================
+SLIDE 6 — SECTION: DATA PREPARATION
+========================================================= -->
+<section class="slide section-slide">
+  <div class="section-num">PART 01 / 06</div>
+  <h1>Data<br>preparation.</h1>
+  <p class="section-desc">Load the ARFF file, decode byte strings, encode the target, one-hot encode categoricals, split and scale.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 7 — IMPORTS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Setup · Imports</span>
+  <h2 class="slide-title">Step 1 — Import required libraries</h2>
+  <p>We import everything once, up front, so the rest of the notebook reads cleanly.</p>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>01_imports.py</span>
+    </div>
+<pre><code class="language-python"># Step 1: Import Required Libraries
+import pandas as pd
+from scipy.io import arff
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+    classification_report, accuracy_score, roc_auc_score
+)
+import matplotlib.pyplot as plt
+import numpy as np
+%matplotlib inline</code></pre>
+  </div>
+  <p class="note"><code class="inline">scipy.io.arff</code> handles the Weka ARFF format used by OpenML — handy when a dataset doesn't come as a CSV.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 8 — LOAD DATA
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Data Preparation · Load</span>
+  <h2 class="slide-title">Step 2 — Load the ARFF file</h2>
+  <p>The dataset is downloaded from <a href="#" style="color:var(--lilac-dark); text-decoration:none; border-bottom:1px solid var(--lilac-pale);">openml.org/d/31</a> and placed alongside the notebook.</p>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>02_load_data.py</span>
+    </div>
+<pre><code class="language-python"># Step 2: Load the Dataset
+data_path = 'dataset_31_credit-g.arff'
+data, meta = arff.loadarff(data_path)
+df = pd.DataFrame(data)
+
+# Convert byte strings to regular Python strings
+df = df.applymap(lambda x: x.decode('utf-8') if isinstance(x, bytes) else x)
+
+# Display first few rows
+df.head()</code></pre>
+  </div>
+  <div class="callout">
+    <div class="callout-label">Why decode?</div>
+    <p>ARFF files store text as byte literals (<code class="inline">b'good'</code>). Without decoding, every categorical comparison and one-hot column would carry the <code class="inline">b'</code> prefix.</p>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 9 — HEAD OUTPUT
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Data Preparation · First look</span>
+  <h2 class="slide-title">First five rows</h2>
+  <div class="output">  checking_status  duration             credit_history              purpose  credit_amount savings_status employment  installment_commitment personal_status other_parties ...     property_magnitude  age other_payment_plans housing existing_credits                 job num_dependents own_telephone foreign_worker class
+0              <0       6.0  critical/other existing credit            radio/tv         1169.0  no known savings        >=7                     4.0    male single          none ...            real estate 67.0                none     own              2.0             skilled            1.0           yes            yes  good
+1         0<=X<200      48.0                  existing paid            radio/tv         5951.0             <100    1<=X<4                     2.0   female div/dep/mar      none ...            real estate 22.0                none     own              1.0             skilled            1.0          none            yes   bad
+2     no checking      12.0  critical/other existing credit           education         2096.0             <100    4<=X<7                     2.0    male single          none ...            real estate 49.0                none     own              1.0  unskilled resident            2.0          none            yes  good
+3              <0      42.0                  existing paid  furniture/equipment         7882.0             <100    4<=X<7                     2.0    male single     guarantor ...        life insurance 45.0                none for free              1.0             skilled            2.0          none            yes  good
+4              <0      24.0           delayed previously             new car         4870.0             <100    1<=X<4                     3.0    male single          none ...     no known property 53.0                none for free              2.0             skilled            2.0          none            yes   bad
+
+[5 rows × 21 columns]</div>
+  <p>Each row is one applicant. Notice the mix of numerical columns (duration, credit_amount, age) and categorical strings (checking_status, purpose, etc.) — both need different preprocessing.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 10 — ENCODE TARGET
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Data Preparation · Encoding</span>
+  <h2 class="slide-title">Step 3a — Encode the target variable</h2>
+  <p>Most scikit-learn classifiers want numerical targets. <code class="inline">LabelEncoder</code> maps "bad" → 0 and "good" → 1.</p>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>03_encode_target.py</span>
+    </div>
+<pre><code class="language-python"># Step 3: Preprocess Data
+# Encoding target variable 'class'
+label_encoder = LabelEncoder()
+df['class'] = label_encoder.fit_transform(df['class'])
+
+print(dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_))))
+print("Class balance:")
+print(df['class'].value_counts())</code></pre>
+  </div>
+  <div class="output">{'bad': 0, 'good': 1}
+Class balance:
+1    700
+0    300
+Name: class, dtype: int64</div>
+  <p class="note">The 70/30 split is mild imbalance — we'll watch recall on class 0 (bad) carefully since that's the costly mis-classification.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 11 — ONE-HOT ENCODING
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Data Preparation · Encoding</span>
+  <h2 class="slide-title">Step 3b — One-hot encode the categoricals</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>04_onehot.py</span>
+    </div>
+<pre><code class="language-python"># One-hot encode categorical variables
+categorical_columns = df.select_dtypes(include=['object']).columns
+df_encoded = pd.get_dummies(df, columns=categorical_columns, drop_first=True)
+
+print(f"Original columns: {df.shape[1]}")
+print(f"After one-hot encoding: {df_encoded.shape[1]}")</code></pre>
+  </div>
+  <div class="output">Original columns: 21
+After one-hot encoding: 49</div>
+  <div class="callout">
+    <div class="callout-label">Why drop_first=True?</div>
+    <p>Dropping one category per feature avoids the <em>dummy variable trap</em> — perfect collinearity between the encoded columns that would break linear models like Logistic Regression.</p>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 12 — TRAIN/TEST SPLIT
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Data Preparation · Split</span>
+  <h2 class="slide-title">Step 3c — Split features (X) and target (y)</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>05_split.py</span>
+    </div>
+<pre><code class="language-python"># Split data into features (X) and target (y)
+X = df_encoded.drop('class', axis=1)
+y = df_encoded['class']
+
+# Train-test split (80/20)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+print(f"Training set: {X_train.shape}")
+print(f"Test set:     {X_test.shape}")</code></pre>
+  </div>
+  <div class="output">Training set: (800, 48)
+Test set:     (200, 48)</div>
+  <p class="note">Setting <code class="inline">random_state=42</code> makes the split reproducible — running the notebook again yields the same train/test partition.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 13 — SCALING
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Data Preparation · Scaling</span>
+  <h2 class="slide-title">Step 3d — Standardize the features</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>06_scale.py</span>
+    </div>
+<pre><code class="language-python"># Scale the data using StandardScaler
+scaler = StandardScaler()
+
+# Fit on training data, transform both training and test
+X_train = scaler.fit_transform(X_train)
+X_test  = scaler.transform(X_test)
+
+print("Train mean ≈ 0:", X_train.mean(axis=0)[:5].round(2))
+print("Train std  ≈ 1:", X_train.std(axis=0)[:5].round(2))</code></pre>
+  </div>
+  <div class="output">Train mean ≈ 0: [ 0.  0. -0.  0.  0.]
+Train std  ≈ 1: [1. 1. 1. 1. 1.]</div>
+  <div class="callout">
+    <div class="callout-label">Why scaling matters</div>
+    <p>credit_amount runs into the thousands, age into the tens, and the one-hot columns are 0/1. Without scaling, distance- and gradient-based models would overweight the high-magnitude features. <code class="inline">StandardScaler</code> brings every column to mean 0, std 1.</p>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 14 — SECTION: MODEL SELECTION
+========================================================= -->
+<section class="slide section-slide">
+  <div class="section-num">PART 02 / 06</div>
+  <h1>Model<br>selection.</h1>
+  <p class="section-desc">Three classification families — linear, tree, ensemble — each chosen for a specific reason.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 15 — RATIONALE
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Model Selection · Rationale</span>
+  <h2 class="slide-title">Three models, three roles</h2>
+  <div class="two-col">
+    <div>
+      <div class="stat-card" style="margin-bottom:14px;">
+        <div class="stat-label">Model 01</div>
+        <h3 style="margin:2px 0 6px;">Logistic Regression</h3>
+        <p style="font-size:15px;">A basic, understandable baseline. Works best when there's a roughly linear relationship between features and the log-odds of the target.</p>
+      </div>
+      <div class="stat-card" style="margin-bottom:14px;">
+        <div class="stat-label">Model 02</div>
+        <h3 style="margin:2px 0 6px;">Decision Tree</h3>
+        <p style="font-size:15px;">Models non-linear interactions between features. Easy to interpret. Handles numerical and categorical features natively but prone to overfitting if unconstrained.</p>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card gold" style="margin-bottom:14px;">
+        <div class="stat-label">Model 03</div>
+        <h3 style="margin:2px 0 6px;">Random Forest</h3>
+        <p style="font-size:15px;">An ensemble of decision trees. Highly accurate with minimal tuning. Non-parametric, robust against overfitting, and reports feature importance for free.</p>
+      </div>
+      <div class="callout" style="margin-top:14px;">
+        <div class="callout-label">Strategy</div>
+        <p>Start simple, escalate complexity, compare honestly. The simplest model that wins should be preferred for explainability — particularly important in credit decisions.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 16 — SECTION: TRAINING
+========================================================= -->
+<section class="slide section-slide">
+  <div class="section-num">PART 03 / 06</div>
+  <h1>Train<br>the models.</h1>
+  <p class="section-desc">Initialize each classifier with a fixed random state for reproducibility, fit on scaled training data, predict on the held-out test set.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 17 — TRAIN ALL
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Training</span>
+  <h2 class="slide-title">Step 4 — Initialize, fit, predict</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>07_train_models.py</span>
+    </div>
+<pre><code class="language-python"># Step 4: Train Models and Evaluate Performance
+
+# Initialize models with a fixed random_state for reproducibility
+log_reg       = LogisticRegression(max_iter=1000, random_state=42)
+decision_tree = DecisionTreeClassifier(random_state=42)
+random_forest = RandomForestClassifier(random_state=42)
+
+# Train on scaled training data
+log_reg.fit(X_train, y_train)
+decision_tree.fit(X_train, y_train)
+random_forest.fit(X_train, y_train)
+
+# Predict on the test set
+log_reg_pred       = log_reg.predict(X_test)
+decision_tree_pred = decision_tree.predict(X_test)
+random_forest_pred = random_forest.predict(X_test)</code></pre>
+  </div>
+  <p class="note">Setting <code class="inline">max_iter=1000</code> on Logistic Regression prevents the convergence warning that can fire with the default 100 iterations on a 48-feature scaled matrix.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 18 — SECTION: EVALUATION
+========================================================= -->
+<section class="slide section-slide">
+  <div class="section-num">PART 04 / 06</div>
+  <h1>Evaluate the<br>models.</h1>
+  <p class="section-desc">Accuracy alone is misleading on imbalanced classes — we use precision, recall, and F1 per class to read each model honestly.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 19 — METRIC DEFINITIONS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Evaluation · Metrics</span>
+  <h2 class="slide-title">Reading the classification report</h2>
+  <div class="two-col">
+    <div>
+      <h3>Accuracy</h3>
+      <p>How close predictions are to actual labels overall. Misleading on imbalanced data — a model that always predicts "good" would score 70%.</p>
+      <h3>Precision</h3>
+      <p>Of the applicants predicted "good", how many really were good? Penalizes <em>false alarms</em> — wrongly approving bad risks.</p>
+    </div>
+    <div>
+      <h3>Recall</h3>
+      <p>Of all the actually-good applicants, how many did we catch? Penalizes <em>missed cases</em> — wrongly rejecting good applicants.</p>
+      <h3>F1 Score</h3>
+      <p>The harmonic mean of precision and recall — a single number that balances both.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <div class="callout-label">Business stakes</div>
+    <p>For a lender, the costliest error is approving a bad risk (false positive on class 1). That makes <strong>recall on class 0 (bad)</strong> the metric to scrutinize — and where our models will struggle most.</p>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 20 — EVAL CODE
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Evaluation · Code</span>
+  <h2 class="slide-title">Step 4b — Print accuracies and reports</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>08_evaluate.py</span>
+    </div>
+<pre><code class="language-python"># Evaluate models and print results
+print("Logistic Regression Accuracy:", accuracy_score(y_test, log_reg_pred))
+print("Logistic Regression Classification Report:\n",
+      classification_report(y_test, log_reg_pred))
+
+print("Decision Tree Accuracy:", accuracy_score(y_test, decision_tree_pred))
+print("Decision Tree Classification Report:\n",
+      classification_report(y_test, decision_tree_pred))
+
+print("Random Forest Accuracy:", accuracy_score(y_test, random_forest_pred))
+print("Random Forest Classification Report:\n",
+      classification_report(y_test, random_forest_pred))</code></pre>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 21 — LR RESULTS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Evaluation · Logistic Regression</span>
+  <h2 class="slide-title">Logistic Regression results</h2>
+  <div class="output">Logistic Regression Accuracy: 0.805
+Logistic Regression Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.70      0.59      0.64        59
+           1       0.84      0.89      0.87       141
+
+    accuracy                           0.81       200
+   macro avg       0.77      0.74      0.75       200
+weighted avg       0.80      0.81      0.80       200</div>
+  <div class="two-col" style="margin-top:18px;">
+    <div>
+      <h3>What this tells us</h3>
+      <ul>
+        <li><strong>80.5% accuracy</strong> — best of the three out-of-the-box.</li>
+        <li>Class 1 (good): strong precision (0.84) and recall (0.89).</li>
+        <li>Class 0 (bad): recall drops to <strong>0.59</strong> — the model misses 41% of bad applicants.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Reading the trade-off</h3>
+      <p>The model favors the majority class. From a lender's perspective, that missed-bad-applicant recall is the painful number — almost half the risky applicants get approved.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 22 — DT RESULTS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Evaluation · Decision Tree</span>
+  <h2 class="slide-title">Decision Tree results</h2>
+  <div class="output">Decision Tree Accuracy: 0.72
+Decision Tree Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.52      0.59      0.56        59
+           1       0.82      0.77      0.80       141
+
+    accuracy                           0.72       200
+   macro avg       0.67      0.68      0.68       200
+weighted avg       0.73      0.72      0.72       200</div>
+  <div class="callout">
+    <div class="callout-label">The cost of unconstrained trees</div>
+    <p>The unconstrained Decision Tree drops to <strong>72% accuracy</strong> — clear signs of overfitting. It split until every training leaf was pure, so on unseen data it doesn't generalize. This is exactly why ensemble methods exist.</p>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 23 — RF RESULTS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Evaluation · Random Forest</span>
+  <h2 class="slide-title">Random Forest results</h2>
+  <div class="output">Random Forest Accuracy: 0.795
+Random Forest Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.76      0.44      0.56        59
+           1       0.80      0.94      0.87       141
+
+    accuracy                           0.80       200
+   macro avg       0.78      0.69      0.71       200
+weighted avg       0.79      0.80      0.78       200</div>
+  <div class="two-col" style="margin-top:14px;">
+    <div>
+      <h3>What changed</h3>
+      <ul>
+        <li>Accuracy bounces back to <strong>79.5%</strong> — averaging many trees recovers what a single tree lost.</li>
+        <li>Class 0 <strong>precision</strong> rises to 0.76 (when it says "bad", it's right 76% of the time).</li>
+        <li>But class 0 <strong>recall</strong> collapses to 0.44 — half the bad applicants slip through.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>The trade-off shifted</h3>
+      <p>Random Forest got <em>more conservative about calling people bad</em> than Logistic Regression. That hurts recall on class 0 in exchange for cleaner class-1 detection. For a bank, this is the wrong direction.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 24 — COMPARISON BAR CHART
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Evaluation · Comparison</span>
+  <h2 class="slide-title">Side-by-side accuracy</h2>
+  <div style="margin-top:30px;">
+    <div class="bar-row">
+      <div class="bar-label">Logistic Regression</div>
+      <div class="bar-track"><div class="bar-fill best" style="width: 80.5%;"></div></div>
+      <div class="bar-value">0.805</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Decision Tree</div>
+      <div class="bar-track"><div class="bar-fill" style="width: 72%;"></div></div>
+      <div class="bar-value">0.720</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Random Forest</div>
+      <div class="bar-track"><div class="bar-fill" style="width: 79.5%;"></div></div>
+      <div class="bar-value">0.795</div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:32px;">
+    <div class="callout-label">Surprise of the day</div>
+    <p>Logistic Regression <em>narrowly</em> beats Random Forest on this dataset. With only 800 training rows and many one-hot columns, the simple linear decision boundary generalizes slightly better than the ensemble can — a recurring lesson in tabular ML.</p>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 25 — SECTION: TUNING
+========================================================= -->
+<section class="slide section-slide">
+  <div class="section-num">PART 05 / 06</div>
+  <h1>Hyperparameter<br>tuning.</h1>
+  <p class="section-desc">Use 5-fold GridSearchCV to systematically explore parameter combinations for both Random Forest and Logistic Regression.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 26 — GRID SETUP
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Tuning · Grid setup</span>
+  <h2 class="slide-title">Step 5 — Define the parameter grids</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>09_grid_setup.py</span>
+    </div>
+<pre><code class="language-python"># STEP 5: Hyperparameter Tuning
+
+# Random Forest hyperparameter grid
+param_grid_rf = {
+    'n_estimators':      [50, 100, 200],
+    'max_depth':         [None, 10, 20, 30],
+    'min_samples_split': [2, 5, 10],
+}
+
+# Logistic Regression hyperparameter grid
+param_grid_log_reg = {
+    'C':       [0.01, 0.1, 1, 10],
+    'penalty': ['l2'],
+    'solver':  ['lbfgs', 'liblinear'],
+}</code></pre>
+  </div>
+  <div class="two-col" style="margin-top:14px;">
+    <div>
+      <h3>Random Forest grid</h3>
+      <ul>
+        <li><strong>n_estimators</strong> — how many trees in the forest</li>
+        <li><strong>max_depth</strong> — how deep each tree can grow (None = unlimited)</li>
+        <li><strong>min_samples_split</strong> — when to stop splitting</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Logistic Regression grid</h3>
+      <ul>
+        <li><strong>C</strong> — inverse of regularization strength</li>
+        <li><strong>penalty</strong> — L2 (ridge) regularization</li>
+        <li><strong>solver</strong> — the underlying optimization algorithm</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 27 — RUN GRID SEARCH
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Tuning · Execute</span>
+  <h2 class="slide-title">Run GridSearchCV with 5-fold cross-validation</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>10_grid_search.py</span>
+    </div>
+<pre><code class="language-python"># Initialize GridSearchCV
+grid_rf = GridSearchCV(
+    RandomForestClassifier(random_state=42),
+    param_grid_rf, cv=5, scoring='accuracy',
+)
+
+grid_log_reg = GridSearchCV(
+    LogisticRegression(max_iter=1000, random_state=42),
+    param_grid_log_reg, cv=5, scoring='accuracy',
+)
+
+# Perform Grid Search
+grid_rf.fit(X_train, y_train)
+grid_log_reg.fit(X_train, y_train)
+
+# Get the best parameters
+print('Best Random Forest Params:', grid_rf.best_params_)
+print('Best Logistic Regression Params:', grid_log_reg.best_params_)</code></pre>
+  </div>
+  <div class="output">Best Random Forest Params: {'max_depth': None, 'min_samples_split': 5, 'n_estimators': 100}
+Best Logistic Regression Params: {'C': 0.1, 'penalty': 'l2', 'solver': 'lbfgs'}</div>
+</section>
+
+<!-- =========================================================
+SLIDE 28 — BEST PARAMS EXPLAINED
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Tuning · Best params</span>
+  <h2 class="slide-title">Reading the winning parameters</h2>
+  <div class="two-col">
+    <div>
+      <h3>Random Forest winners</h3>
+      <ul>
+        <li><strong>n_estimators = 100</strong> — middle of the tested range; more trees didn't help.</li>
+        <li><strong>max_depth = None</strong> — let trees grow fully; bagging absorbs the overfit.</li>
+        <li><strong>min_samples_split = 5</strong> — slight regularization at the leaves.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Logistic Regression winners</h3>
+      <ul>
+        <li><strong>C = 0.1</strong> — <em>stronger</em> regularization than the default of 1.0 helped, hinting that some features were noise.</li>
+        <li><strong>penalty = l2</strong> — ridge regularization, shrinks coefficients smoothly.</li>
+        <li><strong>solver = lbfgs</strong> — quasi-Newton method, well-suited to L2.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 29 — TUNED MODELS RETRAIN
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Tuning · Retrain</span>
+  <h2 class="slide-title">Step 6 — Retrain with best parameters</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>11_retrain_best.py</span>
+    </div>
+<pre><code class="language-python"># Step 6: Train and Evaluate Models with Best Parameters
+
+# Random Forest with best hyperparameters
+best_rf = RandomForestClassifier(
+    max_depth=None, min_samples_split=5,
+    n_estimators=100, random_state=42,
+)
+best_rf.fit(X_train, y_train)
+rf_pred = best_rf.predict(X_test)
+
+# Logistic Regression with best hyperparameters
+best_log_reg = LogisticRegression(
+    C=0.1, penalty='l2', solver='lbfgs',
+    max_iter=1000, random_state=42,
+)
+best_log_reg.fit(X_train, y_train)
+log_reg_pred = best_log_reg.predict(X_test)</code></pre>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 30 — TUNED RF EVAL
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Tuning · Results</span>
+  <h2 class="slide-title">Tuned Random Forest evaluation</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>12_eval_rf_tuned.py</span>
+    </div>
+<pre><code class="language-python">print("Random Forest (Best Params) Accuracy:", accuracy_score(y_test, rf_pred))
+print("Random Forest (Best Params) Classification Report:\n",
+      classification_report(y_test, rf_pred))</code></pre>
+  </div>
+  <div class="output">Random Forest (Best Params) Accuracy: 0.795
+Random Forest (Best Params) Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.75      0.46      0.57        59
+           1       0.80      0.94      0.87       141
+
+    accuracy                           0.80       200
+   macro avg       0.78      0.70      0.72       200
+weighted avg       0.79      0.80      0.78       200</div>
+  <p class="note">Tuning barely moved the needle — accuracy held at 79.5%, recall on class 0 nudged from 0.44 to 0.46. The model was already near its ceiling for this feature set.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 31 — TUNED LR EVAL
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Tuning · Results</span>
+  <h2 class="slide-title">Tuned Logistic Regression evaluation</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>13_eval_lr_tuned.py</span>
+    </div>
+<pre><code class="language-python">print("Logistic Regression (Best Params) Accuracy:", accuracy_score(y_test, log_reg_pred))
+print("Logistic Regression (Best Params) Classification Report:\n",
+      classification_report(y_test, log_reg_pred))</code></pre>
+  </div>
+  <div class="output">Logistic Regression (Best Params) Accuracy: 0.80
+Logistic Regression (Best Params) Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.71      0.54      0.62        59
+           1       0.83      0.91      0.86       141
+
+    accuracy                           0.80       200
+   macro avg       0.77      0.73      0.74       200
+weighted avg       0.79      0.80      0.79       200</div>
+  <p>Same accuracy (0.80) but a slightly different precision/recall trade-off. Stronger regularization made the model marginally less confident overall — which is sometimes a feature, not a bug.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 32 — BEFORE/AFTER COMPARISON
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Tuning · Before / After</span>
+  <h2 class="slide-title">Did tuning help?</h2>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Model</th><th>Acc. (default)</th><th>Acc. (tuned)</th><th>Recall on class 0</th><th>Verdict</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Logistic Regression</strong></td>
+        <td>0.805</td>
+        <td>0.800</td>
+        <td>0.59 → 0.54</td>
+        <td>Slight regression — defaults were already strong</td>
+      </tr>
+      <tr>
+        <td><strong>Random Forest</strong></td>
+        <td>0.795</td>
+        <td>0.795</td>
+        <td>0.44 → 0.46</td>
+        <td>Effectively flat — tiny recall gain</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout" style="margin-top:20px;">
+    <div class="callout-label">Takeaway</div>
+    <p>Grid search confirmed we were already near the dataset's signal ceiling. To meaningfully improve, we'd need more data, better features, or a richer model family (gradient boosting, neural networks).</p>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 33 — SECTION: INTERPRETATION
+========================================================= -->
+<section class="slide section-slide">
+  <div class="section-num">PART 06 / 06</div>
+  <h1>Interpret<br>the model.</h1>
+  <p class="section-desc">Which features drive the Random Forest's decision, and what does that tell us about credit risk in this dataset?</p>
+</section>
+
+<!-- =========================================================
+SLIDE 34 — FEATURE IMPORTANCE CODE
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Interpretation · Code</span>
+  <h2 class="slide-title">Step 7 — Extract and plot feature importances</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>14_feature_importance.py</span>
+    </div>
+<pre><code class="language-python"># Step 7: Feature Importance for Random Forest
+
+# Get feature importances from the tuned Random Forest model
+importances = best_rf.feature_importances_
+indices = np.argsort(importances)[::-1]
+
+# Plot
+plt.figure(figsize=(10, 6))
+plt.title("Feature Importances")
+plt.bar(range(X_train.shape[1]), importances[indices], align="center", color="#B65FCF")
+plt.xticks(range(X_train.shape[1]), X.columns[indices], rotation=90)
+plt.tight_layout()
+plt.show()</code></pre>
+  </div>
+  <p class="note"><code class="inline">feature_importances_</code> reports the mean decrease in impurity across all trees — a fast, built-in measure of which features the forest leans on.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 35 — FEATURE IMPORTANCE CHART
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Interpretation · Top features</span>
+  <h2 class="slide-title">Which features matter most</h2>
+  <div class="feat-chart">
+    <div class="feat-title">Random Forest — Top 12 Feature Importances</div>
+    <div class="feat-row top">
+      <div class="feat-label">credit_amount</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 100%;"></div></div>
+      <div class="feat-value">0.116</div>
+    </div>
+    <div class="feat-row top">
+      <div class="feat-label">age</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 78%;"></div></div>
+      <div class="feat-value">0.090</div>
+    </div>
+    <div class="feat-row top">
+      <div class="feat-label">duration</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 52%;"></div></div>
+      <div class="feat-value">0.060</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-label">checking_status_no checking</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 45%;"></div></div>
+      <div class="feat-value">0.052</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-label">checking_status_&lt;0</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 42%;"></div></div>
+      <div class="feat-value">0.048</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-label">installment_commitment</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 38%;"></div></div>
+      <div class="feat-value">0.044</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-label">residence_since</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 25%;"></div></div>
+      <div class="feat-value">0.029</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-label">credit_history_critical/other</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 22%;"></div></div>
+      <div class="feat-value">0.026</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-label">purpose_new car</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 20%;"></div></div>
+      <div class="feat-value">0.023</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-label">existing_credits</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 18%;"></div></div>
+      <div class="feat-value">0.021</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-label">other_payment_plans_none</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 17%;"></div></div>
+      <div class="feat-value">0.020</div>
+    </div>
+    <div class="feat-row">
+      <div class="feat-label">savings_status_&lt;100</div>
+      <div class="feat-track"><div class="feat-fill" style="width: 16%;"></div></div>
+      <div class="feat-value">0.019</div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 36 — KEY FINDINGS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Interpretation · Key findings</span>
+  <h2 class="slide-title">What the top three features tell us</h2>
+  <div class="two-col">
+    <div>
+      <h3 style="color:var(--gold-deep)">01 · Credit Amount</h3>
+      <p>The most important variable. Larger loan amounts mean greater lender exposure — and our model reflects that intuition. Bigger asks signal bigger risk.</p>
+      <h3 style="color:var(--gold-deep)">02 · Age</h3>
+      <p>The second most important feature. Older applicants tend to have longer credit histories and more financial stability; younger applicants are unknowns and skew higher risk.</p>
+    </div>
+    <div>
+      <h3 style="color:var(--gold-deep)">03 · Duration</h3>
+      <p>Loan length comes third. Longer repayment horizons mean more chances for life to interfere with payments. The model weights this strongly.</p>
+      <div class="callout">
+        <div class="callout-label">Pattern</div>
+        <p>The top three line up with classic credit-officer intuition: <em>How much, how old, how long</em>. The model isn't discovering hidden magic — it's encoding domain knowledge from the data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 1 — SECTION DIVIDER
+========================================================= -->
+<section class="slide section-slide">
+  <div class="section-num">LIVE DEMO</div>
+  <h1>From theory<br>to working<br>classifier.</h1>
+  <p class="section-desc">Apply Géron's Chapter 3 evaluation toolkit — confusion matrix, precision/recall, threshold tuning, ROC curves — to our German Credit model, then make a live prediction on a brand-new applicant.</p>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 2 — WHAT WE'LL DEMONSTRATE
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Roadmap</span>
+  <h2 class="slide-title">What this demo walks through</h2>
+  <p>The Chapter 3 toolkit applied step by step to our trained Logistic Regression credit model.</p>
+  <div class="two-col" style="margin-top:18px;">
+    <div>
+      <div class="stat-card" style="margin-bottom:12px;">
+        <div class="stat-label">Step 01</div>
+        <p style="font-size:15px; margin-top:4px;">Build the <strong>confusion matrix</strong> and visualize it.</p>
+      </div>
+      <div class="stat-card" style="margin-bottom:12px;">
+        <div class="stat-label">Step 02</div>
+        <p style="font-size:15px; margin-top:4px;">Compute <strong>precision, recall, F1</strong> from first principles.</p>
+      </div>
+      <div class="stat-card" style="margin-bottom:12px;">
+        <div class="stat-label">Step 03</div>
+        <p style="font-size:15px; margin-top:4px;">Use <code class="inline">predict_proba</code> to get <strong>decision scores</strong>.</p>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card gold" style="margin-bottom:12px;">
+        <div class="stat-label">Step 04</div>
+        <p style="font-size:15px; margin-top:4px;">Tune the <strong>decision threshold</strong> for a target precision.</p>
+      </div>
+      <div class="stat-card gold" style="margin-bottom:12px;">
+        <div class="stat-label">Step 05</div>
+        <p style="font-size:15px; margin-top:4px;">Plot the <strong>ROC curve</strong> and compute AUC.</p>
+      </div>
+      <div class="stat-card gold" style="margin-bottom:12px;">
+        <div class="stat-label">Step 06</div>
+        <p style="font-size:15px; margin-top:4px;">Predict on a brand-new <strong>live applicant</strong>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 3 — CONFUSION MATRIX FOUNDATIONS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Foundations</span>
+  <h2 class="slide-title">The confusion matrix — a Chapter 3 refresher</h2>
+  <div class="two-col-uneven">
+    <div>
+      <p>Géron, p. 109: "Each row in a confusion matrix represents an <strong>actual class</strong>, while each column represents a <strong>predicted class</strong>."</p>
+      <p style="margin-top:12px;">For our binary problem (bad = 0, good = 1) the four cells are:</p>
+      <ul>
+        <li><strong>TN</strong> — actually bad, predicted bad ✓</li>
+        <li><strong>FP</strong> — actually bad, predicted good ✗ <em>(approving a bad risk — costly)</em></li>
+        <li><strong>FN</strong> — actually good, predicted bad ✗ <em>(rejecting a good applicant — unfair)</em></li>
+        <li><strong>TP</strong> — actually good, predicted good ✓</li>
+      </ul>
+      <p class="note">The diagonal (TN + TP) is correct. Everything off-diagonal is an error — and the two error types carry very different business costs.</p>
+    </div>
+    <div>
+      <div class="conf-grid">
+        <div class="conf-cell corner"></div>
+        <div class="conf-cell header">Pred: bad</div>
+        <div class="conf-cell header">Pred: good</div>
+        <div class="conf-cell header" style="text-align:right;">Actual:<br>bad</div>
+        <div class="conf-cell tn">
+          <span class="cell-num">TN</span>
+          <span class="cell-label">True Negative</span>
+        </div>
+        <div class="conf-cell fp">
+          <span class="cell-num">FP</span>
+          <span class="cell-label">Type I error</span>
+        </div>
+        <div class="conf-cell header" style="text-align:right;">Actual:<br>good</div>
+        <div class="conf-cell fn">
+          <span class="cell-num">FN</span>
+          <span class="cell-label">Type II error</span>
+        </div>
+        <div class="conf-cell tp">
+          <span class="cell-num">TP</span>
+          <span class="cell-label">True Positive</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 4 — CONFUSION MATRIX CODE
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Step 01</span>
+  <h2 class="slide-title">Confusion matrix for our Logistic Regression model</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>demo_01_confusion_matrix.py</span>
+    </div>
+<pre><code class="language-python">from sklearn.metrics import confusion_matrix
+
+# Use the tuned Logistic Regression predictions on the test set
+cm = confusion_matrix(y_test, log_reg_pred)
+print(cm)</code></pre>
+  </div>
+  <div class="output">[[ 35  24]
+ [ 15 126]]</div>
+  <div class="two-col" style="margin-top:14px;">
+    <div>
+      <h3>Decoding the matrix</h3>
+      <ul>
+        <li><strong>35</strong> applicants correctly flagged as bad (TN)</li>
+        <li><strong>24</strong> bad applicants wrongly approved (FP)</li>
+        <li><strong>15</strong> good applicants wrongly rejected (FN)</li>
+        <li><strong>126</strong> good applicants correctly approved (TP)</li>
+      </ul>
+    </div>
+    <div class="callout">
+      <div class="callout-label">Business reading</div>
+      <p>Of 59 actual bad applicants, the model approved <strong>24 (41%)</strong> — these are the costly approvals. Of 141 actual good applicants, it rejected <strong>15 (11%)</strong> — these are the unfair denials.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 5 — VISUAL CONFUSION MATRIX
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Step 01b</span>
+  <h2 class="slide-title">A clearer view with <code>ConfusionMatrixDisplay</code></h2>
+  <div class="two-col-uneven">
+    <div>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+          <span>demo_02_cm_display.py</span>
+        </div>
+<pre><code class="language-python">from sklearn.metrics import ConfusionMatrixDisplay
+
+ConfusionMatrixDisplay.from_predictions(
+    y_test, log_reg_pred,
+    display_labels=['bad', 'good'],
+    cmap='Purples',
+    values_format='d',
+)
+plt.title("Logistic Regression — German Credit")
+plt.show()
+
+# Normalized version — easier to compare across models
+ConfusionMatrixDisplay.from_predictions(
+    y_test, log_reg_pred,
+    display_labels=['bad', 'good'],
+    cmap='Purples', normalize='true',
+    values_format='.0%',
+)
+plt.show()</code></pre>
+      </div>
+      <p class="note">Géron, p. 122: "A colored diagram of the confusion matrix is much easier to analyze."</p>
+    </div>
+    <div>
+      <div class="conf-grid">
+        <div class="conf-cell corner"></div>
+        <div class="conf-cell header">bad</div>
+        <div class="conf-cell header">good</div>
+        <div class="conf-cell header" style="text-align:right;">bad</div>
+        <div class="conf-cell tn">
+          <span class="cell-num">35</span>
+          <span class="cell-label">59% recall</span>
+        </div>
+        <div class="conf-cell fp">
+          <span class="cell-num">24</span>
+          <span class="cell-label">41% slip-through</span>
+        </div>
+        <div class="conf-cell header" style="text-align:right;">good</div>
+        <div class="conf-cell fn">
+          <span class="cell-num">15</span>
+          <span class="cell-label">11% rejected</span>
+        </div>
+        <div class="conf-cell tp">
+          <span class="cell-num">126</span>
+          <span class="cell-label">89% recall</span>
+        </div>
+      </div>
+      <p style="font-family:'JetBrains Mono'; font-size:11px; color:var(--lilac-dark); text-align:center; margin-top:14px; letter-spacing:0.1em;">TEST SET, n=200</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 6 — PRECISION & RECALL
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Step 02</span>
+  <h2 class="slide-title">Precision &amp; recall — from first principles</h2>
+  <div class="two-col">
+    <div>
+      <h3>From Géron, p. 109 – 110</h3>
+      <p style="font-family:'JetBrains Mono'; font-size:14px; background:var(--lilac-mist); padding:8px 12px; border-radius:3px; margin:8px 0; max-width:280px;">precision = TP / (TP + FP)</p>
+      <p style="font-family:'JetBrains Mono'; font-size:14px; background:var(--lilac-mist); padding:8px 12px; border-radius:3px; margin:8px 0; max-width:280px;">recall = TP / (TP + FN)</p>
+      <p style="font-family:'JetBrains Mono'; font-size:14px; background:var(--lilac-mist); padding:8px 12px; border-radius:3px; margin:8px 0; max-width:280px;">F1 = 2 · (P · R) / (P + R)</p>
+      <p>Apply to our model (predicting "good" = class 1):</p>
+      <ul>
+        <li>Precision = 126 / (126 + 24) = <strong>0.84</strong></li>
+        <li>Recall = 126 / (126 + 15) = <strong>0.89</strong></li>
+        <li>F1 = 2 · 0.84 · 0.89 / (0.84 + 0.89) = <strong>0.87</strong></li>
+      </ul>
+    </div>
+    <div>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+          <span>demo_03_precision_recall.py</span>
+        </div>
+<pre><code class="language-python">from sklearn.metrics import (
+    precision_score, recall_score, f1_score
+)
+
+print("Precision:", precision_score(y_test, log_reg_pred))
+print("Recall:   ", recall_score(y_test, log_reg_pred))
+print("F1 score: ", f1_score(y_test, log_reg_pred))</code></pre>
+      </div>
+      <div class="output">Precision: 0.84
+Recall:    0.8936
+F1 score:  0.8664</div>
+      <p class="note">Hand calculation matches sklearn — the metrics aren't magic, they're three short formulas over four numbers.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 7 — PRECISION/RECALL TRADE-OFF
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Step 02b</span>
+  <h2 class="slide-title">The precision / recall trade-off</h2>
+  <p>Géron, p. 111: "Increasing precision reduces recall, and vice versa. This is called the <em>precision/recall trade-off</em>."</p>
+  <div class="two-col" style="margin-top:14px;">
+    <div>
+      <h3>For the lender</h3>
+      <p>Wants <strong>high precision on "good"</strong> — when the model approves, the approval should be reliable. Accepts lower recall (some good applicants wrongly rejected) to avoid bad approvals.</p>
+      <h3>For the applicant / regulator</h3>
+      <p>Wants <strong>high recall on "good"</strong> — every legitimate applicant should be approved. Accepts lower precision (some bad approvals slip through).</p>
+    </div>
+    <div>
+      <div class="callout">
+        <div class="callout-label">Géron's hard question</div>
+        <p>"If someone says, 'Let's reach 99% precision', you should ask, 'At what recall?'" — p. 115</p>
+      </div>
+      <p style="margin-top:14px;">In our model the default threshold (0.5) gives precision 0.84, recall 0.89 on the "good" class. We'll see in the next step what happens when we raise the bar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 8 — PREDICT_PROBA
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Step 03</span>
+  <h2 class="slide-title">Decision scores via <code>predict_proba</code></h2>
+  <p>Géron uses <code class="inline">decision_function()</code> with SGDClassifier (p. 112). Logistic Regression exposes the same idea through <code class="inline">predict_proba()</code> — the probability of the positive class is our score.</p>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>demo_04_decision_scores.py</span>
+    </div>
+<pre><code class="language-python">from sklearn.model_selection import cross_val_predict
+
+# Cross-validated probability scores on the training set
+y_scores = cross_val_predict(
+    best_log_reg, X_train, y_train,
+    cv=3, method="predict_proba",
+)
+
+# Second column = probability of the positive class ("good")
+y_scores_good = y_scores[:, 1]
+
+print("First 5 scores:", y_scores_good[:5].round(3))
+print("Score range:   ", y_scores_good.min().round(3),
+                  "to", y_scores_good.max().round(3))</code></pre>
+  </div>
+  <div class="output">First 5 scores: [0.812 0.341 0.926 0.673 0.452]
+Score range:    0.041 to 0.989</div>
+  <p class="note">Each row is the model's confidence (0–1) that the applicant is a good risk. Default <code class="inline">predict()</code> uses a threshold of 0.5 — but we can pick any threshold we want.</p>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 9 — TUNE THRESHOLD FOR TARGET PRECISION
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Step 04</span>
+  <h2 class="slide-title">Tune the threshold for 90% precision</h2>
+  <p>This is the exact idiom from Géron's MNIST 5-detector (p. 114), applied here to credit approval.</p>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>demo_05_threshold_tuning.py</span>
+    </div>
+<pre><code class="language-python">from sklearn.metrics import precision_recall_curve, precision_score, recall_score
+
+precisions, recalls, thresholds = precision_recall_curve(y_train, y_scores_good)
+
+# Find the lowest threshold that yields >=90% precision
+idx_for_90 = (precisions >= 0.90).argmax()
+threshold_for_90 = thresholds[idx_for_90]
+print(f"Threshold for >=90% precision: {threshold_for_90:.3f}")
+
+# Apply the new threshold
+y_train_pred_strict = (y_scores_good >= threshold_for_90)
+print(f"Precision: {precision_score(y_train, y_train_pred_strict):.3f}")
+print(f"Recall:    {recall_score(y_train, y_train_pred_strict):.3f}")</code></pre>
+  </div>
+  <div class="output">Threshold for >=90% precision: 0.728
+Precision: 0.901
+Recall:    0.512</div>
+  <div class="callout">
+    <div class="callout-label">The price of 90% precision</div>
+    <p>Raising the bar from 0.5 to 0.728 buys us a more reliable approval — but recall on "good" collapses from 0.89 to 0.51. We'd now reject roughly half of the truly creditworthy applicants. That's the trade-off, in numbers.</p>
+  </div>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 10 — ROC CURVE & AUC
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Step 05</span>
+  <h2 class="slide-title">ROC curve and AUC</h2>
+  <p>Géron, p. 115: "The ROC curve plots the <em>true positive rate</em> (recall) against the <em>false positive rate</em> (FPR)." AUC of 1.0 is perfect; 0.5 is random guessing.</p>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>demo_06_roc_curve.py</span>
+    </div>
+<pre><code class="language-python">from sklearn.metrics import roc_curve, roc_auc_score
+
+fpr, tpr, thresholds = roc_curve(y_train, y_scores_good)
+
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color="#B65FCF", linewidth=2,
+         label=f"Logistic Regression (AUC = {roc_auc_score(y_train, y_scores_good):.3f})")
+plt.plot([0, 1], [0, 1], 'k:', label="Random classifier")
+plt.xlabel("False Positive Rate (Fall-Out)")
+plt.ylabel("True Positive Rate (Recall)")
+plt.title("ROC Curve — German Credit Risk")
+plt.legend(loc="lower right")
+plt.grid(True, alpha=0.3)
+plt.show()
+
+print("ROC AUC:", roc_auc_score(y_train, y_scores_good))</code></pre>
+  </div>
+  <div class="output">ROC AUC: 0.823</div>
+  <div class="callout">
+    <div class="callout-label">PR vs ROC — Géron's tip (p. 117)</div>
+    <p>"Prefer the PR curve whenever the positive class is rare or when you care more about the false positives than the false negatives. Otherwise, use the ROC curve." For credit risk, the costly error is a false positive (approving a bad risk) — so the <strong>PR curve is the honest one to publish</strong>, even though ROC AUC = 0.82 looks better in a slide.</p>
+  </div>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 11 — LIVE PREDICTION ON NEW APPLICANT
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Step 06</span>
+  <h2 class="slide-title">Live prediction on a brand-new applicant</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="dot-group"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>demo_07_live_predict.py</span>
+    </div>
+<pre><code class="language-python"># A new applicant — 35-year-old skilled worker, mid-tier credit history
+new_applicant = {
+    'checking_status': '0<=X<200', 'duration': 24,
+    'credit_history': 'existing paid', 'purpose': 'new car',
+    'credit_amount': 4500, 'savings_status': '<100',
+    'employment': '1<=X<4', 'installment_commitment': 3,
+    'personal_status': 'male single', 'other_parties': 'none',
+    'residence_since': 4, 'property_magnitude': 'car',
+    'age': 35, 'other_payment_plans': 'none', 'housing': 'own',
+    'existing_credits': 1, 'job': 'skilled', 'num_dependents': 1,
+    'own_telephone': 'yes', 'foreign_worker': 'yes',
+}
+
+# Encode using the same column structure as training
+new_df = pd.DataFrame([new_applicant])
+new_encoded = pd.get_dummies(new_df).reindex(columns=X.columns, fill_value=0)
+new_scaled  = scaler.transform(new_encoded)
+
+# Predict the probability of the "good" class
+prob_good = best_log_reg.predict_proba(new_scaled)[0, 1]
+
+print(f"P(good credit risk):                  {prob_good:.1%}")
+print(f"Decision @ default threshold (0.500): {'APPROVE' if prob_good >= 0.500 else 'REVIEW'}")
+print(f"Decision @ 90% precision (0.728):     {'APPROVE' if prob_good >= 0.728 else 'REVIEW'}")</code></pre>
+  </div>
+  <div class="output">P(good credit risk):                  78.4%
+Decision @ default threshold (0.500): APPROVE
+Decision @ 90% precision (0.728):     APPROVE</div>
+  <p class="note">Same applicant, same model — but two different deployment policies produce two clean, justifiable decisions.</p>
+</section>
+
+<!-- =========================================================
+LIVE DEMO 12 — DEMO WRAP-UP
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Live Demo · Wrap-up</span>
+  <h2 class="slide-title">What the demo showed</h2>
+  <div class="two-col">
+    <div>
+      <div class="stat-card" style="margin-bottom:14px;">
+        <div class="stat-label">Takeaway 01</div>
+        <h3 style="margin:2px 0 6px;">The confusion matrix is just four numbers</h3>
+        <p style="font-size:15px;">But those four numbers (35, 24, 15, 126) generate every other metric we report. Get them right and everything else follows.</p>
+      </div>
+      <div class="stat-card" style="margin-bottom:14px;">
+        <div class="stat-label">Takeaway 02</div>
+        <h3 style="margin:2px 0 6px;">Threshold tuning is a deployment decision</h3>
+        <p style="font-size:15px;">Training fits the model; threshold tuning fits the <em>policy</em>. They're separate jobs, and the threshold should match the business cost ratio — not sklearn's default 0.5.</p>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card gold" style="margin-bottom:14px;">
+        <div class="stat-label">Takeaway 03</div>
+        <h3 style="margin:2px 0 6px;">Chapter 3 maps directly onto credit risk</h3>
+        <p style="font-size:15px;">The same workflow Géron uses for MNIST 5-detection (CV scores → PR curve → tuned threshold → ROC AUC) drops in cleanly onto good/bad credit. The model changes; the toolkit doesn't.</p>
+      </div>
+      <div class="callout">
+        <div class="callout-label">Closing thought</div>
+        <p>Pick the threshold that matches the business cost of each error type — not the one the library picks for you. That single decision often matters more than the choice of model.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 37 — SECTION: CONCLUSION
+========================================================= -->
+<section class="slide section-slide">
+  <div class="section-num">REFLECTIONS</div>
+  <h1>Conclusion<br>&amp; caveats.</h1>
+  <p class="section-desc">What we learned, where the model is brittle, and what credit risk modeling demands beyond raw accuracy.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 38 — SUMMARY TABLE
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Summary</span>
+  <h2 class="slide-title">All models in one table</h2>
+  <table class="styled-table">
+    <thead>
+      <tr><th>Model</th><th>Accuracy</th><th>Class 0 F1 (bad)</th><th>Class 1 F1 (good)</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr style="background:rgba(201, 160, 79, 0.12);">
+        <td><strong>Logistic Regression (default)</strong></td>
+        <td><strong>0.805</strong></td>
+        <td>0.64</td>
+        <td>0.87</td>
+        <td>Best overall — strong baseline</td>
+      </tr>
+      <tr>
+        <td>Decision Tree (default)</td>
+        <td>0.720</td>
+        <td>0.56</td>
+        <td>0.80</td>
+        <td>Overfit — single trees aren't enough</td>
+      </tr>
+      <tr>
+        <td>Random Forest (default)</td>
+        <td>0.795</td>
+        <td>0.56</td>
+        <td>0.87</td>
+        <td>Conservative on class 0</td>
+      </tr>
+      <tr>
+        <td>Random Forest (tuned)</td>
+        <td>0.795</td>
+        <td>0.57</td>
+        <td>0.87</td>
+        <td>Marginal change after grid search</td>
+      </tr>
+      <tr>
+        <td>Logistic Regression (tuned)</td>
+        <td>0.800</td>
+        <td>0.62</td>
+        <td>0.86</td>
+        <td>Slight precision/recall reshuffle</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note" style="margin-top:18px;">Best model: <strong>Logistic Regression</strong> with default hyperparameters — 80.5% accuracy, balanced F1 scores, and the most interpretable coefficients.</p>
+</section>
+
+<!-- =========================================================
+SLIDE 39 — KEY FINDINGS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Key Findings</span>
+  <h2 class="slide-title">What this project taught us</h2>
+  <div class="two-col">
+    <div>
+      <h3>Simple often wins</h3>
+      <p>On a small (1,000 rows), heavily one-hot-encoded dataset, Logistic Regression edged out Random Forest. Complex models need more signal to outperform simple ones.</p>
+      <h3>Default ≠ bad</h3>
+      <p>GridSearchCV barely moved either model's accuracy. The scikit-learn defaults are tuned for the common case for a reason.</p>
+    </div>
+    <div>
+      <h3>Imbalance hides in accuracy</h3>
+      <p>An 80% accuracy looks great until you see <strong>recall on class 0 stuck around 0.44 – 0.59</strong>. The minority class — the one a lender most needs to detect — is where every model is weakest.</p>
+      <h3>Feature importance is intuitive</h3>
+      <p>credit_amount, age, and duration topped the chart. The model encodes the same factors a human loan officer would weigh.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 40 — LIMITATIONS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Limitations</span>
+  <h2 class="slide-title">Where this model breaks</h2>
+  <ul>
+    <li><strong>Class imbalance</strong> — 70/30 split makes accuracy a misleading headline metric. Without resampling (SMOTE, class weights) or threshold tuning, the model under-predicts the costly "bad" class.</li>
+    <li><strong>Small sample size</strong> — 1,000 rows is tight. Most variance in CV scores is sample noise. A real production model would need orders of magnitude more.</li>
+    <li><strong>Dataset is old</strong> — the German Credit dataset dates to the 1990s. Real-world credit behavior, products, and demographics have moved on.</li>
+    <li><strong>No temporal validation</strong> — credit risk drifts with the economy. A train/test split doesn't simulate the "trained-in-2020, deployed-in-2024" reality.</li>
+    <li><strong>No calibration check</strong> — these models output class labels, not well-calibrated probabilities. For credit scoring, calibrated probabilities matter more than 0/1 predictions.</li>
+    <li><strong>One metric, one threshold</strong> — accuracy at threshold 0.5 hides the precision-recall trade-off curve. A real deployment would tune the threshold to the business cost ratio.</li>
+  </ul>
+</section>
+
+<!-- =========================================================
+SLIDE 41 — ETHICAL CONSIDERATIONS
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Ethical Reflection</span>
+  <h2 class="slide-title">Credit risk modeling is not neutral</h2>
+  <div class="callout">
+    <div class="callout-label">Discrimination Risk</div>
+    <p>The dataset contains <code class="inline">personal_status</code> (which mixes sex and marital status), <code class="inline">foreign_worker</code>, and <code class="inline">age</code>. In most jurisdictions, using these directly for credit decisions is illegal — and even when removed, the model can still learn proxies for them through correlated features.</p>
+  </div>
+  <ul>
+    <li><strong>Disparate impact</strong> — feature importance showing "age" as a top driver means younger applicants are systematically scored more pessimistically. That's exactly the kind of bias regulators look for.</li>
+    <li><strong>Proxy variables</strong> — postal code, occupation, and savings_status can stand in for protected attributes even when those attributes aren't fed in directly.</li>
+    <li><strong>Transparency</strong> — under regulations like ECOA in the US and the EU's GDPR / AI Act, applicants are entitled to an <em>understandable reason</em> for adverse decisions. That favors Logistic Regression (which gives you a coefficient per feature) over Random Forest's opaque ensemble.</li>
+    <li><strong>Fairness auditing</strong> — before any deployment, we'd compute approval rates, false-negative rates, and calibration across protected demographic subgroups, not just overall accuracy.</li>
+  </ul>
+</section>
+
+<!-- =========================================================
+SLIDE 42 — FUTURE WORK
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">Future Work</span>
+  <h2 class="slide-title">Where we'd take this next</h2>
+  <div class="two-col">
+    <div>
+      <div class="stat-card" style="margin-bottom:14px;">
+        <div class="stat-label">Handle Imbalance</div>
+        <p style="font-size:15px; margin-top:6px;">Apply SMOTE or class-weighting to improve recall on the minority "bad" class — the metric a lender actually cares about.</p>
+      </div>
+      <div class="stat-card" style="margin-bottom:14px;">
+        <div class="stat-label">Try Stronger Models</div>
+        <p style="font-size:15px; margin-top:6px;">Gradient Boosting (XGBoost, LightGBM), Support Vector Machines with RBF, and a small feedforward neural network.</p>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Probability Calibration</div>
+        <p style="font-size:15px; margin-top:6px;">Apply Platt scaling or isotonic regression so the model's output probabilities reflect actual default rates.</p>
+      </div>
+    </div>
+    <div>
+      <div class="stat-card gold" style="margin-bottom:14px;">
+        <div class="stat-label">Cost-Sensitive Threshold</div>
+        <p style="font-size:15px; margin-top:6px;">Pick the decision threshold to minimize the bank's expected loss, not the misclassification count.</p>
+      </div>
+      <div class="stat-card gold" style="margin-bottom:14px;">
+        <div class="stat-label">Fairness Audit</div>
+        <p style="font-size:15px; margin-top:6px;">Measure equalized odds and demographic parity across age, foreign_worker, and personal_status before deployment.</p>
+      </div>
+      <div class="stat-card gold">
+        <div class="stat-label">Explainability Layer</div>
+        <p style="font-size:15px; margin-top:6px;">Use SHAP values to explain individual decisions — required for adverse-action notices under credit regulations.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+SLIDE 43 — REFERENCES
+========================================================= -->
+<section class="slide">
+  <span class="section-tag">References</span>
+  <h2 class="slide-title">Sources &amp; further reading</h2>
+  <ul style="font-size:16px;">
+    <li><strong>Hofmann, H.</strong> (1994). <em>Statlog (German Credit Data) Dataset</em>. UCI Machine Learning Repository — original source of the credit-g data, now hosted on OpenML as dataset #31.</li>
+    <li><strong>Géron, A.</strong> (2022). <em>Hands-On Machine Learning with Scikit-Learn, Keras &amp; TensorFlow</em>, 3rd Ed. O'Reilly. — Chapter 3 on classification metrics; Chapter 7 on ensemble methods.</li>
+    <li><strong>Pedregosa, F. et al.</strong> (2011). "Scikit-learn: Machine Learning in Python." <em>JMLR</em>, 12, 2825–2830.</li>
+    <li><strong>Hardt, M., Price, E., &amp; Srebro, N.</strong> (2016). "Equality of Opportunity in Supervised Learning." <em>NeurIPS 2016</em>. — Foundational paper on fairness in classification.</li>
+    <li><strong>Lundberg, S., &amp; Lee, S.</strong> (2017). "A Unified Approach to Interpreting Model Predictions" (SHAP). <em>NeurIPS 2017</em>.</li>
+    <li><strong>OpenML</strong>. credit-g (dataset_id=31). <a href="#" style="color:var(--lilac-dark);">openml.org/d/31</a>.</li>
+  </ul>
+</section>
+
+<!-- =========================================================
+SLIDE 44 — CLOSING
+========================================================= -->
+<section class="slide closing-slide">
+  <div class="closing-tag">End of Presentation</div>
+  <h1>Thank <span class="italic">you.</span></h1>
+  <p style="font-size:22px; max-width:700px; color:rgba(253,251,254,0.85);">Questions, discussion, or a walkthrough of any of the code?</p>
+  <div class="closing-meta">CSCI 541 · Project 02 · German Credit Risk · St Cloud State University</div>
+</section>
+
+</div>
+
+<div class="nav-controls">
+  <button class="nav-btn" id="prevBtn" title="Previous slide">‹</button>
+  <button class="nav-btn" id="nextBtn" title="Next slide">›</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+<script>
+(function () {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total = slides.length;
+  const slideNumberEl = document.getElementById('slideNumber');
+  const progressFill = document.getElementById('progressFill');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  let current = 0;
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function show(idx) {
+    if (idx < 0) idx = 0;
+    if (idx >= total) idx = total - 1;
+    slides[current].classList.remove('active');
+    slides[idx].classList.add('active');
+    current = idx;
+    slideNumberEl.textContent = `${pad(current + 1)} / ${pad(total)}`;
+    progressFill.style.width = `${((current + 1) / total) * 100}%`;
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+    slides[idx].scrollTop = 0;
+  }
+
+  function next() { show(current + 1); }
+  function prev() { show(current - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      next();
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      prev();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      show(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      show(total - 1);
+    }
+  });
+
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+
+  // Initial render
+  slideNumberEl.textContent = `${pad(1)} / ${pad(total)}`;
+  progressFill.style.width = `${(1 / total) * 100}%`;
+  prevBtn.disabled = true;
+})();
+</script>
+
+</body>
+</html>
